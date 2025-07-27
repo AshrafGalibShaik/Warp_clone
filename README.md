@@ -1,8 +1,8 @@
-# ANTRAFT 🚀
+# Warp clone 🚀
 
 **Next-Generation AI-Powered Terminal Application**
 
-ANTRAFT is an intelligent, developer-friendly terminal application inspired by Warp, built with modern Rust technologies and integrated AI capabilities. It combines the power of a GPU-accelerated terminal with AI assistance, security scanning, and intelligent code completion.
+Warp_clone  is an intelligent, developer-friendly terminal application inspired by Warp, built with modern Rust technologies and integrated AI capabilities. It combines the power of a GPU-accelerated terminal with AI assistance, security scanning, and intelligent code completion.
 
 ## ✨ Features
 
@@ -75,34 +75,34 @@ ANTRAFT is an intelligent, developer-friendly terminal application inspired by W
 
 ```bash
 # Clone the repository
-git clone https://github.com/antraft/antraft.git
-cd antraft
+git clone https://github.com/Warp Clone/Warp Clone.git
+cd Warp Clone
 
 # Build the application
 cargo build --release
 
-# Run ANTRAFT
-./target/release/antraft
+# Run Warp Clone
+./target/release/Warp Clone
 ```
 
 ### Quick Start
 
 ```bash
 # Start with debug logging
-./target/release/antraft --debug
+./target/release/Warp Clone --debug
 
 # Start in a specific directory
-./target/release/antraft --directory /path/to/project
+./target/release/Warp Clone --directory /path/to/project
 
 # Use custom configuration
-./target/release/antraft --config /path/to/config.toml
+./target/release/Warp Clone --config /path/to/config.toml
 ```
 
 ## ⚙️ Configuration
 
-ANTRAFT uses a TOML configuration file located at:
-- **Linux/macOS**: `~/.config/antraft/config.toml`
-- **Windows**: `%APPDATA%/antraft/config.toml`
+Warp Clone uses a TOML configuration file located at:
+- **Linux/macOS**: `~/.config/Warp Clone/config.toml`
+- **Windows**: `%APPDATA%/Warp Clone/config.toml`
 
 ### Sample Configuration
 
@@ -112,7 +112,7 @@ api_key = "your_gemini_api_key"
 model = "gemini-pro"
 max_tokens = 2048
 temperature = 0.7
-system_prompt = "You are an AI assistant integrated into ANTRAFT..."
+system_prompt = "You are an AI assistant integrated into Warp Clone..."
 
 [security]
 enable_bandit = true
@@ -166,7 +166,7 @@ scan-project --type full
 
 ### Project Structure
 ```
-antraft/
+Warp Clone/
 ├── src/
 │   ├── main.rs              # Application entry point
 │   ├── terminal/            # Terminal engine and PTY management
@@ -238,11 +238,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/antraft/antraft/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/antraft/antraft/discussions)
+- **Issues**: [GitHub Issues](https://github.com/Warp Clone/Warp Clone/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/Warp Clone/Warp Clone/discussions)
 - **Documentation**: [docs/](docs/)
 
 ---
-
-**Made with ❤️ by the ANTRAFT Development Team**
-"# antraft_rust" 
