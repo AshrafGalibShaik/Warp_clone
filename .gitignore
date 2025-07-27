@@ -1,0 +1,40 @@
+# Ignore build artifacts
+target/
+
+# Ignore environment files
+.env
+env-example
+
+# Ignore IDE and editor files
+.idea/
+*.iml
+.vscode/
+
+# Ignore OS generated files
+.DS_Store
+
+# Ignore logs
+*.log
+
+# Ignore dependency lock file (if not needed)
+# Uncomment if you want to ignore Cargo.lock in a library
+# Cargo.lock
+
+# Ignore documentation build output
+docs/*.html
+
+# Ignore test results
+tests/
+
+# Ignore development database files (if any)
+*.db
+
+# Ignore Python virtual environments (if applicable)
+venv/
+
+# Ignore compiled files
+*.o
+*.so
+
+# Ignore node modules (if applicable)
+node_modules/
