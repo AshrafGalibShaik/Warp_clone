@@ -1,12 +1,10 @@
 use anyhow::Result;
 use notify::{Event, RecommendedWatcher, RecursiveMode, Watcher};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc;
 use std::time::SystemTime;
 use tokio::sync::mpsc as tokio_mpsc;
-use walkdir::WalkDir;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileNode {
@@ -43,7 +41,11 @@ impl FileNode {
             .to_string();
 
         let is_directory = metadata.is_dir();
-        let size = if is_directory { None } else { Some(metadata.len()) };
+        let size = if is_directory {
+            None
+        } else {
+            Some(metadata.len())
+        };
         let modified = metadata.modified().ok();
         let file_type = determine_file_type(&path, is_directory);
 
@@ -75,23 +77,27 @@ impl FileNode {
 
     pub fn formatted_modified(&self) -> String {
         match self.modified {
-            Some(time) => {
-                match time.duration_since(SystemTime::UNIX_EPOCH) {
-                    Ok(duration) => {
-                        let dt = chrono::DateTime::from_timestamp(duration.as_secs() as i64, 0);
-                        dt.map(|d| d.format("%Y-%m-%d %H:%M").to_string())
-                            .unwrap_or_else(|| "Unknown".to_string())
-                    }
-                    Err(_) => "Unknown".to_string(),
+            Some(time) => match time.duration_since(SystemTime::UNIX_EPOCH) {
+                Ok(duration) => {
+                    let dt = chrono::DateTime::from_timestamp(duration.as_secs() as i64, 0);
+                    dt.map(|d| d.format("%Y-%m-%d %H:%M").to_string())
+                        .unwrap_or_else(|| "Unknown".to_string())
                 }
-            }
+                Err(_) => "Unknown".to_string(),
+            },
             None => "Unknown".to_string(),
         }
     }
 
     pub fn icon(&self) -> &'static str {
         match &self.file_type {
-            FileType::Directory => if self.is_expanded { "📂" } else { "📁" },
+            FileType::Directory => {
+                if self.is_expanded {
+                    "📂"
+                } else {
+                    "📁"
+                }
+            }
             FileType::SourceCode(lang) => match lang.as_str() {
                 "rust" => "🦀",
                 "python" => "🐍",
@@ -117,12 +123,27 @@ fn determine_file_type(path: &Path, is_directory: bool) -> FileType {
     }
 
     let extension = path.extension().and_then(|ext| ext.to_str()).unwrap_or("");
-    let filename = path.file_name().and_then(|name| name.to_str()).unwrap_or("");
+    let filename = path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("");
 
     // Configuration files
-    if matches!(filename, "Cargo.toml" | "package.json" | "pom.xml" | "build.gradle" | 
-                        "Makefile" | "CMakeLists.txt" | ".gitignore" | ".dockerignore" |
-                        "Dockerfile" | "docker-compose.yml" | "requirements.txt" | "go.mod") {
+    if matches!(
+        filename,
+        "Cargo.toml"
+            | "package.json"
+            | "pom.xml"
+            | "build.gradle"
+            | "Makefile"
+            | "CMakeLists.txt"
+            | ".gitignore"
+            | ".dockerignore"
+            | "Dockerfile"
+            | "docker-compose.yml"
+            | "requirements.txt"
+            | "go.mod"
+    ) {
         return FileType::Config;
     }
 
@@ -132,12 +153,18 @@ fn determine_file_type(path: &Path, is_directory: bool) -> FileType {
     }
 
     // Images
-    if matches!(extension, "png" | "jpg" | "jpeg" | "gif" | "bmp" | "svg" | "webp") {
+    if matches!(
+        extension,
+        "png" | "jpg" | "jpeg" | "gif" | "bmp" | "svg" | "webp"
+    ) {
         return FileType::Image;
     }
 
     // Archives
-    if matches!(extension, "zip" | "tar" | "gz" | "bz2" | "xz" | "7z" | "rar") {
+    if matches!(
+        extension,
+        "zip" | "tar" | "gz" | "bz2" | "xz" | "7z" | "rar"
+    ) {
         return FileType::Archive;
     }
 
@@ -175,7 +202,10 @@ fn determine_file_type(path: &Path, is_directory: bool) -> FileType {
 fn is_likely_binary(path: &Path) -> bool {
     // Simple heuristic: check if file has executable permissions or common binary extensions
     let extension = path.extension().and_then(|ext| ext.to_str()).unwrap_or("");
-    matches!(extension, "exe" | "dll" | "so" | "dylib" | "bin" | "o" | "obj")
+    matches!(
+        extension,
+        "exe" | "dll" | "so" | "dylib" | "bin" | "o" | "obj"
+    )
 }
 
 fn format_file_size(size: u64) -> String {
@@ -256,7 +286,7 @@ impl FileExplorer {
                     for entry in entries {
                         if let Ok(entry) = entry {
                             let entry_path = entry.path();
-                            
+
                             // Skip hidden files if not showing them
                             if !self.show_hidden_files && self.is_hidden_file(&entry_path) {
                                 continue;
@@ -277,12 +307,10 @@ impl FileExplorer {
             }
 
             // Sort children: directories first, then files, both alphabetically
-            children.sort_by(|a, b| {
-                match (a.is_directory, b.is_directory) {
-                    (true, false) => std::cmp::Ordering::Less,
-                    (false, true) => std::cmp::Ordering::Greater,
-                    _ => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
-                }
+            children.sort_by(|a, b| match (a.is_directory, b.is_directory) {
+                (true, false) => std::cmp::Ordering::Less,
+                (false, true) => std::cmp::Ordering::Greater,
+                _ => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
             });
 
             node.children = Some(children);
@@ -293,7 +321,7 @@ impl FileExplorer {
 
     fn should_ignore_path(&self, path: &Path) -> bool {
         let path_str = path.to_string_lossy();
-        
+
         // Check gitignore patterns
         for pattern in &self.gitignore_patterns {
             if path_str.contains(pattern) {
@@ -303,11 +331,21 @@ impl FileExplorer {
 
         // Common ignore patterns
         let ignore_patterns = [
-            ".git", "node_modules", "target", "build", "dist",
-            "__pycache__", ".venv", "venv", ".idea", ".vscode",
+            ".git",
+            "node_modules",
+            "target",
+            "build",
+            "dist",
+            "__pycache__",
+            ".venv",
+            "venv",
+            ".idea",
+            ".vscode",
         ];
 
-        ignore_patterns.iter().any(|pattern| path_str.contains(pattern))
+        ignore_patterns
+            .iter()
+            .any(|pattern| path_str.contains(pattern))
     }
 
     fn is_hidden_file(&self, path: &Path) -> bool {
@@ -359,7 +397,9 @@ impl FileExplorer {
     }
 
     pub fn find_node_by_path(&self, path: &Path) -> Option<&FileNode> {
-        self.root_node.as_ref().and_then(|root| find_node_recursive(root, path))
+        self.root_node
+            .as_ref()
+            .and_then(|root| find_node_recursive(root, path))
     }
 
     pub fn expand_path(&mut self, path: &Path) -> Result<()> {
@@ -455,7 +495,7 @@ fn find_node_recursive<'a>(node: &'a FileNode, target_path: &Path) -> Option<&'a
 fn expand_path_recursive(node: &mut FileNode, target_path: &Path) {
     if target_path.starts_with(&node.path) {
         node.is_expanded = true;
-        
+
         if let Some(children) = &mut node.children {
             for child in children {
                 expand_path_recursive(child, target_path);
@@ -466,25 +506,25 @@ fn expand_path_recursive(node: &mut FileNode, target_path: &Path) {
 
 fn count_files(node: &FileNode) -> usize {
     let mut count = if !node.is_directory { 1 } else { 0 };
-    
+
     if let Some(children) = &node.children {
         for child in children {
             count += count_files(child);
         }
     }
-    
+
     count
 }
 
 fn count_directories(node: &FileNode) -> usize {
     let mut count = if node.is_directory { 1 } else { 0 };
-    
+
     if let Some(children) = &node.children {
         for child in children {
             count += count_directories(child);
         }
     }
-    
+
     count
 }
 
@@ -492,7 +532,7 @@ fn search_files_recursive<'a>(node: &'a FileNode, query: &str, results: &mut Vec
     if node.name.to_lowercase().contains(&query.to_lowercase()) {
         results.push(node);
     }
-    
+
     if let Some(children) = &node.children {
         for child in children {
             search_files_recursive(child, query, results);

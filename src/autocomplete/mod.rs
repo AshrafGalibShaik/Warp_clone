@@ -2,8 +2,7 @@ use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tree_sitter::{Parser, Language};
-use tree_sitter_bash::LANGUAGE;
+use tree_sitter::Parser;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AutocompleteItem {
@@ -68,7 +67,11 @@ impl AutocompleteEngine {
         self.command_providers.push(provider);
     }
 
-    pub fn get_suggestions(&self, input: &str, context: &AutocompleteContext) -> Vec<AutocompleteItem> {
+    pub fn get_suggestions(
+        &self,
+        input: &str,
+        context: &AutocompleteContext,
+    ) -> Vec<AutocompleteItem> {
         let mut all_suggestions = Vec::new();
 
         // Get suggestions from all providers
@@ -232,7 +235,11 @@ impl BuiltinCommandProvider {
 }
 
 impl AutocompleteProvider for BuiltinCommandProvider {
-    fn get_suggestions(&self, input: &str, _context: &AutocompleteContext) -> Vec<AutocompleteItem> {
+    fn get_suggestions(
+        &self,
+        input: &str,
+        _context: &AutocompleteContext,
+    ) -> Vec<AutocompleteItem> {
         self.commands
             .values()
             .filter(|item| item.text.starts_with(input))
@@ -260,16 +267,31 @@ impl GitCommandProvider {
             ("git pull", "Download and merge changes from remote"),
             ("git status", "Display the state of the working directory"),
             ("git log", "Display commit logs"),
-            ("git diff", "Show changes between commits, commit and working tree, etc"),
+            (
+                "git diff",
+                "Show changes between commits, commit and working tree, etc",
+            ),
             ("git branch", "Manage branches"),
-            ("git checkout", "Switch branches or restore working tree files"),
-            ("git merge", "Join two or more development histories together"),
+            (
+                "git checkout",
+                "Switch branches or restore working tree files",
+            ),
+            (
+                "git merge",
+                "Join two or more development histories together",
+            ),
             ("git clone", "Clone a repository into a new directory"),
             ("git init", "Create an empty Git repository"),
             ("git remote", "Manage set of tracked repositories"),
-            ("git fetch", "Download objects and refs from another repository"),
+            (
+                "git fetch",
+                "Download objects and refs from another repository",
+            ),
             ("git reset", "Reset current HEAD to the specified state"),
-            ("git stash", "Stash the changes in a dirty working directory away"),
+            (
+                "git stash",
+                "Stash the changes in a dirty working directory away",
+            ),
         ];
 
         for (cmd, desc) in git_commands {
@@ -315,7 +337,8 @@ impl FileSystemProvider {
         if let Ok(dir_entries) = std::fs::read_dir(dir_path) {
             for entry in dir_entries.flatten() {
                 let path = entry.path();
-                let name = path.file_name()
+                let name = path
+                    .file_name()
                     .and_then(|n| n.to_str())
                     .unwrap_or("")
                     .to_string();
@@ -333,7 +356,7 @@ impl FileSystemProvider {
 
                     entries.push(
                         AutocompleteItem::new(display_name, description, category.to_string())
-                            .with_priority(if is_dir { 8 } else { 5 })
+                            .with_priority(if is_dir { 8 } else { 5 }),
                     );
                 }
             }
@@ -357,7 +380,8 @@ impl AutocompleteProvider for FileSystemProvider {
                     format!("{}/{}", context.current_directory, dir_part)
                 };
 
-                return self.get_directory_entries(&search_dir)
+                return self
+                    .get_directory_entries(&search_dir)
                     .into_iter()
                     .filter(|item| item.text.starts_with(filename_part))
                     .collect();
@@ -365,8 +389,13 @@ impl AutocompleteProvider for FileSystemProvider {
         }
 
         // For simple filenames, search in current directory
-        if !input.is_empty() && input.chars().all(|c| c == '.' || c == '_' || c == '-' || c.is_alphanumeric()) {
-            return self.get_directory_entries(&context.current_directory)
+        if !input.is_empty()
+            && input
+                .chars()
+                .all(|c| c == '.' || c == '_' || c == '-' || c.is_alphanumeric())
+        {
+            return self
+                .get_directory_entries(&context.current_directory)
                 .into_iter()
                 .filter(|item| item.text.starts_with(input))
                 .collect();
@@ -390,7 +419,8 @@ impl HistoryProvider {
 
 impl AutocompleteProvider for HistoryProvider {
     fn get_suggestions(&self, input: &str, context: &AutocompleteContext) -> Vec<AutocompleteItem> {
-        context.recent_commands
+        context
+            .recent_commands
             .iter()
             .filter(|cmd| cmd.starts_with(input))
             .enumerate()
@@ -399,7 +429,8 @@ impl AutocompleteProvider for HistoryProvider {
                     cmd.clone(),
                     "From command history".to_string(),
                     "history".to_string(),
-                ).with_priority(20 - i as i32) // Recent commands get higher priority
+                )
+                .with_priority(20 - i as i32) // Recent commands get higher priority
             })
             .collect()
     }
@@ -452,7 +483,12 @@ impl SyntaxHighlighter {
         highlights
     }
 
-    fn highlight_node(&self, node: tree_sitter::Node, source: &[u8], highlights: &mut Vec<(usize, usize, String)>) {
+    fn highlight_node(
+        &self,
+        node: tree_sitter::Node,
+        source: &[u8],
+        highlights: &mut Vec<(usize, usize, String)>,
+    ) {
         let start = node.start_byte();
         let end = node.end_byte();
         let kind = node.kind();

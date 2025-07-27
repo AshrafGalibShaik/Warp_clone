@@ -1,6 +1,6 @@
 use super::{
-    Block, CommandBlock, TerminalConfig, TerminalEvent, 
-    TerminalEventSender, TerminalSession, PtyManager
+    Block, CommandBlock, PtyManager, TerminalConfig, TerminalEvent, TerminalEventSender,
+    TerminalSession,
 };
 use anyhow::{anyhow, Result};
 use log::{debug, error, info};
@@ -25,7 +25,7 @@ pub struct TerminalEngine {
 impl TerminalEngine {
     pub fn new(config: TerminalConfig, event_sender: TerminalEventSender) -> Result<Self> {
         let pty_manager = Arc::new(PtyManager::new()?);
-        
+
         Ok(Self {
             config,
             sessions: Arc::new(RwLock::new(HashMap::new())),
@@ -39,19 +39,19 @@ impl TerminalEngine {
     pub async fn create_session(&self) -> Result<Uuid> {
         let session = TerminalSession::new();
         let session_id = session.id;
-        
+
         {
             let mut sessions = self.sessions.write().await;
             sessions.insert(session_id, session);
         }
-        
+
         {
             let mut active_id = self.active_session_id.write().await;
             if active_id.is_none() {
                 *active_id = Some(session_id);
             }
         }
-        
+
         info!("Created new terminal session: {}", session_id);
         Ok(session_id)
     }
@@ -86,12 +86,15 @@ impl TerminalEngine {
 
         let working_directory = {
             let sessions = self.sessions.read().await;
-            sessions.get(&session_id)
+            sessions
+                .get(&session_id)
                 .map(|s| s.current_directory.clone())
-                .unwrap_or_else(|| std::env::current_dir()
-                    .unwrap_or_default()
-                    .to_string_lossy()
-                    .to_string())
+                .unwrap_or_else(|| {
+                    std::env::current_dir()
+                        .unwrap_or_default()
+                        .to_string_lossy()
+                        .to_string()
+                })
         };
 
         let command_block = CommandBlock::new(command.clone(), working_directory.clone());
@@ -115,7 +118,7 @@ impl TerminalEngine {
         let event_sender = self.event_sender.clone();
         let sessions = self.sessions.clone();
         let shell = self.config.shell.clone();
-        
+
         tokio::spawn(async move {
             let result = Self::run_command_async(
                 command,
@@ -125,7 +128,8 @@ impl TerminalEngine {
                 event_sender.clone(),
                 sessions,
                 session_id,
-            ).await;
+            )
+            .await;
 
             if let Err(e) = result {
                 error!("Command execution failed: {}", e);
@@ -211,10 +215,15 @@ impl TerminalEngine {
         Ok(())
     }
 
-    pub async fn handle_command_output(&self, command_id: Uuid, output: String, is_stderr: bool) -> Result<()> {
+    pub async fn handle_command_output(
+        &self,
+        command_id: Uuid,
+        output: String,
+        is_stderr: bool,
+    ) -> Result<()> {
         let sessions = self.sessions.clone();
         let mut sessions_guard = sessions.write().await;
-        
+
         for session in sessions_guard.values_mut() {
             if let Some(block) = session.blocks.iter_mut().rev().find(|b| b.id == command_id) {
                 // This is simplified - in a real implementation, you'd want to manage
@@ -229,21 +238,21 @@ impl TerminalEngine {
                 break;
             }
         }
-        
+
         Ok(())
     }
 
     pub async fn handle_command_finished(&self, command_id: Uuid, exit_code: i32) -> Result<()> {
         let sessions = self.sessions.clone();
         let mut sessions_guard = sessions.write().await;
-        
+
         for session in sessions_guard.values_mut() {
             if let Some(block) = session.blocks.iter_mut().rev().find(|b| b.id == command_id) {
                 block.set_exit_code(exit_code);
                 break;
             }
         }
-        
+
         Ok(())
     }
 
@@ -258,7 +267,7 @@ impl TerminalEngine {
     pub async fn clear_session(&self, session_id: Uuid) -> Result<()> {
         let sessions = self.sessions.clone();
         let mut sessions_guard = sessions.write().await;
-        
+
         if let Some(session) = sessions_guard.get_mut(&session_id) {
             session.blocks.clear();
             info!("Cleared session: {}", session_id);
@@ -271,7 +280,7 @@ impl TerminalEngine {
     pub async fn shutdown(&self) {
         info!("Shutting down terminal engine");
         self.is_running.store(false, Ordering::Relaxed);
-        
+
         // Clean up sessions
         let mut sessions = self.sessions.write().await;
         sessions.clear();
@@ -304,7 +313,7 @@ impl TerminalEngine {
                             .unwrap_or_default()
                             .to_string_lossy()
                             .to_string();
-                        
+
                         // Update session directory
                         if let Some(active_id) = *self.active_session_id.read().await {
                             let mut sessions = self.sessions.write().await;
@@ -312,8 +321,11 @@ impl TerminalEngine {
                                 session.current_directory = new_dir.clone();
                             }
                         }
-                        
-                        Some(Ok(Block::system(format!("Changed directory to: {}", new_dir))))
+
+                        Some(Ok(Block::system(format!(
+                            "Changed directory to: {}",
+                            new_dir
+                        ))))
                     }
                     Err(e) => Some(Err(anyhow!("Failed to change directory: {}", e))),
                 }

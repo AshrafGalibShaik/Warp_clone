@@ -1,11 +1,10 @@
-pub mod engine;
 pub mod block;
+pub mod engine;
 pub mod history;
 pub mod pty;
 
+pub use block::{Block, CommandBlock};
 pub use engine::TerminalEngine;
-pub use block::{Block, BlockType, CommandBlock};
-pub use history::CommandHistory;
 pub use pty::PtyManager;
 
 use anyhow::Result;
@@ -26,7 +25,11 @@ pub struct TerminalConfig {
 impl Default for TerminalConfig {
     fn default() -> Self {
         Self {
-            shell: if cfg!(windows) { "pwsh".to_string() } else { "bash".to_string() },
+            shell: if cfg!(windows) {
+                "pwsh".to_string()
+            } else {
+                "bash".to_string()
+            },
             font_size: 14.0,
             theme: "dark".to_string(),
             max_history: 1000,
@@ -37,11 +40,25 @@ impl Default for TerminalConfig {
 
 #[derive(Debug, Clone)]
 pub enum TerminalEvent {
-    CommandStarted { id: Uuid, command: String },
-    CommandOutput { id: Uuid, output: String, is_stderr: bool },
-    CommandFinished { id: Uuid, exit_code: i32 },
-    NewBlock { block: Block },
-    Error { message: String },
+    CommandStarted {
+        id: Uuid,
+        command: String,
+    },
+    CommandOutput {
+        id: Uuid,
+        output: String,
+        is_stderr: bool,
+    },
+    CommandFinished {
+        id: Uuid,
+        exit_code: i32,
+    },
+    NewBlock {
+        block: Block,
+    },
+    Error {
+        message: String,
+    },
 }
 
 pub type TerminalEventSender = mpsc::UnboundedSender<TerminalEvent>;

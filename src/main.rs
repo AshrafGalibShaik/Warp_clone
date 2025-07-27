@@ -1,8 +1,6 @@
 use anyhow::Result;
 use clap::Parser;
-use log::{info, warn};
-use std::sync::Arc;
-use tokio::runtime::Runtime;
+use log::info;
 use eframe::egui;
 
 mod terminal;

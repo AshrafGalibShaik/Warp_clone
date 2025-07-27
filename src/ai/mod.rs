@@ -1,13 +1,12 @@
 pub mod agent;
-pub mod gemini;
 pub mod chat;
+pub mod gemini;
+
+use serde::{Deserialize, Serialize};
 
 pub use agent::AiAgent;
+pub use chat::ChatMessage;
 pub use gemini::GeminiClient;
-pub use chat::{ChatMessage, ChatSession, MessageRole};
-
-use anyhow::Result;
-use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AiConfig {
@@ -32,12 +31,27 @@ impl Default for AiConfig {
 
 #[derive(Debug, Clone)]
 pub enum AiRequest {
-    ExplainCommand { command: String },
-    GenerateCommand { description: String },
-    FixError { error: String, context: Option<String> },
-    CodeReview { code: String, language: Option<String> },
-    SecurityAnalysis { code: String, language: String },
-    Chat { message: String },
+    ExplainCommand {
+        command: String,
+    },
+    GenerateCommand {
+        description: String,
+    },
+    FixError {
+        error: String,
+        context: Option<String>,
+    },
+    CodeReview {
+        code: String,
+        language: Option<String>,
+    },
+    SecurityAnalysis {
+        code: String,
+        language: String,
+    },
+    Chat {
+        message: String,
+    },
 }
 
 #[derive(Debug, Clone)]
