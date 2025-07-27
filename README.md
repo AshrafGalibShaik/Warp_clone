@@ -1,4 +1,4 @@
-# ANTRAFT 🚀
+# Warp_clone 🚀
 
 **Next-Generation AI-Powered Terminal Application**
 
@@ -243,6 +243,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Documentation**: [docs/](docs/)
 
 ---
-
-**Made with ❤️ by the ANTRAFT Development Team**
-"# antraft_rust" 
